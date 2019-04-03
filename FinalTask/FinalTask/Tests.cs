@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Allure.Commons;
 using Allure.NUnit.Attributes;
 using NUnit.Framework.Internal;
+using OpenQA.Selenium.Firefox;
+using System.Threading;
 
 namespace FinalTask
 {
@@ -16,6 +18,18 @@ namespace FinalTask
     {
         public IWebDriver Driver { get; set; }
         public WebDriverWait Wait { get; set; }
+
+        public const string usernameUser1 = "seleniumtests10";
+        public const string passwordUser1 = "060788avavav";
+        public const string usernameUser2 = "seleniumtest2007";
+        public const string passwordUser2 = "060788avavav";
+
+
+        public enum Browsers
+        {
+            Chrome,
+            Firefox
+        }
 
         private static IEnumerable<TestCaseData> DivideCases
         {
@@ -33,8 +47,17 @@ namespace FinalTask
         [SetUp]
         public void SetupTest()
         {
-            Driver = new ChromeDriver(@"D:\Automation");
-            Wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(300));
+            Browsers value = Browsers.Chrome;
+            if (value == Browsers.Chrome)
+            {
+                Driver = new ChromeDriver(@"D:\Automation");
+                Wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(300));
+            }
+            else if (value == Browsers.Firefox)
+            {
+                Driver = new FirefoxDriver(@"D:\Automation");
+                Wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(300));
+            }
         }
 
         [TearDown]
@@ -44,8 +67,8 @@ namespace FinalTask
             {
                 TestContext.Error.WriteLine(
                     $"Test {TestExecutionContext.CurrentContext.CurrentTest.FullName}\" is stopping...");
-                PageObject gmail = new PageObject(Driver);
-                gmail.TakeScreenshot();
+                Login loginPage = new Login(Driver);
+                loginPage.TakeScreenshot();
             });
         }
 
@@ -57,13 +80,14 @@ namespace FinalTask
         [AllureOwner("Katya Astakhova")]
         public void Login_User_Then_Logout(User user)
         {
-            PageObject gmail = new PageObject(Driver);
+            Login loginPage = new Login(Driver);
             var username = user.username;
             var password = user.password;
-            gmail.NavigateTo();
-            gmail.Login(username, password);
-            gmail.Logout();
-            Driver.Close();
+            loginPage.NavigateTo();
+            loginPage.PopulateLogin(username, password);
+            loginPage.IsUserLoggedIn();
+            loginPage.Logout();
+            loginPage.IsUserSignedOut();
         }
 
         [Test]
@@ -72,36 +96,48 @@ namespace FinalTask
         [AllureLink("ID-3")]
         [AllureTest]
         [AllureOwner("Katya Astakhova")]
-        public void Verify_Emails_In_Sent_Folder()
+        public void SendEmail()
         {
-            PageObject gmail = new PageObject(Driver);
-            var username = "seleniumtests10";
-            var password = "060788avavav";
-            gmail.NavigateTo();
-            gmail.VerifySentFolder(username, password);
+            Login loginPage = new Login(Driver);
+            loginPage.NavigateTo();
+            Main mainPage = loginPage.PopulateLogin(usernameUser1, passwordUser1);
+            mainPage.SendEmail();
+            mainPage.SearchInSentFolder();
         }
 
-        //[Test]
-        //public void Verify_Inbox_Folder()
-        //{
-        //    PageObject gmailSession1 = new PageObject(Driver);
-            
-        //    gmailSession1.NavigateTo();
-        //    gmailSession1.VerifyInboxFolder(gmailSession1.usernameUser1, gmailSession1.passwordUser1,
-        //        gmailSession1.usernameUser2, gmailSession1.passwordUser2);
-        //}
-
         [Test]
-        [AllureSubSuite("RemoveEmail")]
+        [AllureSubSuite("ReceiveEmail")]
         [AllureSeverity(Allure.Commons.Model.SeverityLevel.Critical)]
-        [AllureLink("ID-3")]
+        [AllureLink("ID-4")]
         [AllureTest]
         [AllureOwner("Katya Astakhova")]
-        public void Verify_Removed_Email_In_TrashFolder()
+        public void VerifyInbox()
         {
-            PageObject gmail = new PageObject(Driver);
-            gmail.NavigateTo();
-            gmail.DeleteEmailVerifyTrashFolder(gmail.usernameUser2, gmail.passwordUser2);
+            Login loginPage = new Login(Driver);
+            loginPage.NavigateTo();
+            Main mainPage = loginPage.PopulateLogin(usernameUser1, passwordUser1);
+            mainPage.SendEmail();
+            Thread.Sleep(5000);
+            loginPage.Logout();
+            var  driver = new ChromeDriver();
+            Login loginPage1 = new Login(driver);
+            loginPage1.NavigateTo();
+            Main mainPage1 = loginPage1.PopulateLogin(usernameUser2, passwordUser2);
+            mainPage1.VerifyInboxFolder();
+        }
+
+        [Test]
+        [AllureSubSuite("DeleteEmail")]
+        [AllureSeverity(Allure.Commons.Model.SeverityLevel.Critical)]
+        [AllureLink("ID-5")]
+        [AllureTest]
+        [AllureOwner("Katya Astakhova")]
+        public void DeleteEmail()
+        {
+            Login loginPage = new Login(Driver);
+            loginPage.NavigateTo();
+            Main mainPage = loginPage.PopulateLogin(usernameUser2, passwordUser2);
+            mainPage.DeleteEmail();
         }
     }
 }
