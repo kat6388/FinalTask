@@ -24,7 +24,6 @@ namespace FinalTask
         public Main(IWebDriver driver)
         {
             this.driver = driver;
-            driver.Manage().Window.Maximize();
             PageFactory.InitElements(driver, this);
         }
         [FindsBy(How = How.CssSelector, Using = NewEmailButtonLocator)]
@@ -56,14 +55,6 @@ namespace FinalTask
 
         [FindsBy(How = How.XPath, Using = "//*[@data-tooltip='Trash']")]
         public IWebElement TrashFolderIcon { get; set; }
-
-        public void TakeScreenshot()
-        {
-            ITakesScreenshot screenshotDriver = driver as ITakesScreenshot;
-            Screenshot screenshot = screenshotDriver.GetScreenshot();
-            var fp = "D:\\" + "snapshot" + "_" + DateTime.Now.ToString("dd_MMMM_hh_mm_ss_tt") + ".png";
-            screenshot.SaveAsFile(fp, ScreenshotImageFormat.Png);
-        }
 
         public void SendEmail()
         {
